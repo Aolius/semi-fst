@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+# source code: https://github.com/laihuiyuan/pre-trained-formality-transfer/blob/main/classifier/test.py
 import os
 import sys
 import argparse
@@ -43,13 +43,10 @@ def main():
 
     test_src, test_tgt = [], []
 
-
-
     if opt.file is not None:
         with open(opt.file, 'r') as f:
             for line in f.readlines():
                 test_tgt.append(tokenizer.encode(line.strip())[:opt.max_len])
-
 
     print('[Info] {} instances from src test set'.format(len(test_src)))
     print('[Info] {} instances from tgt test set'.format(len(test_tgt)))

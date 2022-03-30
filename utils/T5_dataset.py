@@ -15,10 +15,6 @@ def _tokenizer(text, token_pattern=r"(?u)\b\w\w+\b"):
     token_pattern = re.compile(token_pattern)
     return token_pattern.findall(text)
 
-
-
-
-
 def augment_choice(arg, aug_p, dataset='em'):
     if arg == "drop":
         return naw.random.RandomWordAug(action='delete', aug_p=aug_p)
@@ -65,11 +61,6 @@ def data_augment_all(dataset, augmentor):
         for i, s in enumerate(tqdm(f1)):
             augmented = data_augment(s, aug)
             f2.write(augmented + "\n")
-
-
-
-
-
 
 
 def data_augment(sent, augmentor):
@@ -453,6 +444,3 @@ def UnsupIterator(dataset, tokenizer, opt):
 
     return train_loader
 
-if __name__ == '__main__':
-    data_augment_all('em-f', augmentor='insert')
-    data_augment_all('em-f', augmentor='substitute')

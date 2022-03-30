@@ -97,8 +97,6 @@ def main():
     torch.manual_seed(opt.seed)
 
     tokenizer = T5Tokenizer.from_pretrained('t5-base')
-    # for token in ['<E>', '<F>']:
-    #     tokenizer.add_tokens(token)
 
     train_src, train_tgt, valid_src, valid_tgt = [], [], [], []
     with open('./data/{}/train/informal'.format(opt.dataset),'r') as f:
@@ -136,7 +134,6 @@ def main():
                          betas=(0.9, 0.98), eps=1e-09), opt.lr)
 
     loss_fn = nn.CrossEntropyLoss()
-
     print('[Info] Built a model with {} parameters'.format(
            sum(p.numel() for p in model.parameters())))
     print('[Info]', opt)
@@ -149,7 +146,6 @@ def main():
     total_loss = 0.
     start = time.time()
     for e in range(opt.epoch):
-
         model.train()
         for idx, batch in enumerate(train_loader):
             x_batch, y_batch = map(lambda x: x.to(device), batch)

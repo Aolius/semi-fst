@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-
+# source code: https://github.com/laihuiyuan/pre-trained-formality-transfer/blob/main/utils/helper.py
 import torch
 
 from torch import cuda

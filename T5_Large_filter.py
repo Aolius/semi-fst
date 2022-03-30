@@ -3,33 +3,33 @@
 import os
 import time
 import argparse
-import numpy as np
-import nltk
-from nltk.translate.bleu_score import sentence_bleu
 import random, re, math
-import statistics
+
 
 
 import torch
 from torch import cuda
 from torch.nn import CrossEntropyLoss
 import torch.nn.functional as F
+from torch.utils.data import DataLoader
 
 from transformers import T5Tokenizer, T5ForConditionalGeneration, BartTokenizer
 
+import numpy as np
+import nltk
+from nltk.translate.bleu_score import sentence_bleu
 from pyskiplist import SkipList
 import fitlog
 import kenlm
+import statistics
 
 
 from classifier.textcnn_t5 import TextCNN
 from utils.optim import ScheduledOptim
 from utils.helper import optimize
 from utils.T5_dataset import T5Dataset, T5UnsupDataset, T5AugDataset
-from torch.utils.data import DataLoader
 from utils.dataset import SCIterator
 from utils.nltk_bleu import evaluate_bleu
-
 from T5_test import test
 
 
@@ -60,7 +60,7 @@ def prepare_batch_cls(insts, pad_token_id=1):
     return batch_seq
 
 def score_generated_sentences(generated_text_file_path, model):
-    #get perplexity scores for LM filter
+    #get perplexity scores for evaluation
     log_probs = list()
     perplexity_scores = list()
 
@@ -148,6 +148,7 @@ def main():
     parser.add_argument('-n_step', default=100, type=int, help='number of steps for computing initial score list')
     parser.add_argument('-sigma', default=0.3, type=float, help='dynamic threshold for lm/bleu filtering')
     parser.add_argument('-ngrams', default=4, type=int)
+    parser.add_argument('-log_dir', default='./logs', type=str, help='directory of logs')
 
 
     opt = parser.parse_args()
@@ -158,8 +159,9 @@ def main():
         fbl.write(str(opt) + '\n')
 
     set_seed(opt.seed)
+    # fitlog.debug() disenables fitlog, comment it if you want to use fitlog
     fitlog.debug()
-    fitlog.set_log_dir("final/")
+    fitlog.set_log_dir(opt.log_dir)
     fitlog.add_hyper(opt)
     fitlog.add_hyper_in_file(__file__)
 
@@ -182,13 +184,11 @@ def main():
 
     styles = ['informal', 'formal']
     if opt.style == 0:
-        # unsup_file = f"data/unlabeled/{opt.dataset}-only-c"
         unsup_file = f"data/unlabeled/{opt.dataset.upper()}_200k_inf.txt"
-    # else:
-    #     unsup_file = f"data/unlabeled/bt_formal.txt"
+    else:
+        raise ValueError("Invalid style.")
 
     train_src_file = 'data/{}/{}/{}'.format(opt.dataset, 'train', styles[opt.style])
-
     train_tgt_file = 'data/{}/{}/{}'.format(opt.dataset, 'train', styles[1 - opt.style])
     train_dataset = T5Dataset(train_src_file, train_tgt_file, tokenizer, opt.max_len)
     train_loader = DataLoader(train_dataset,
@@ -197,11 +197,8 @@ def main():
                               shuffle=True)
 
     val_src_file = 'data/{}/{}/{}'.format(opt.dataset, 'tune', styles[opt.style])
-
     val_tgt_file = 'data/{}/{}/{}.ref0'.format(opt.dataset, 'tune', styles[1 - opt.style])
-
     val_label_files = f'data/{opt.dataset}/tune/{styles[1 - opt.style]}'
-
     val_dataset = T5Dataset(val_src_file, val_tgt_file, tokenizer, opt.max_len)
     val_loader = DataLoader(val_dataset,
                             num_workers=2,
@@ -209,9 +206,7 @@ def main():
                             shuffle=False)
 
     # test_src_file = 'data/{}/{}/{}'.format(opt.dataset, 'test', styles[opt.style])
-    #
     # test_tgt_file = 'data/{}/{}/{}.ref0'.format(opt.dataset, 'test', styles[1 - opt.style])
-    #
     # test_label_files = f'data/{opt.dataset}/test/{styles[1 - opt.style]}'
 
 
@@ -223,6 +218,7 @@ def main():
     lm_model = kenlm.Model(language_model_path)
 
     if opt.unsup:
+        #'real-time' means augmenting the texts on-the-fly
         if opt.aug_type == 'real-time':
             aug = opt.aug_choice
             unlabeled_dataset = T5AugDataset(
@@ -234,6 +230,7 @@ def main():
                 dataset=opt.dataset
             )
         else:
+            # Otherwise, augment all the texts beforehand
             unlabeled_dataset = T5UnsupDataset(
                 src_file=f"data/unlabeled/{opt.dataset.upper()}_200k_inf.txt",
                 aug_file=f"data/unlabeled/{opt.dataset.upper()}_200k_inf_{opt.aug_choice}.txt",
@@ -272,7 +269,6 @@ def main():
         unsup_iter = iter(unsup_loader)
 
     for step in range(1, opt.steps):
-
         try:
             data = next(train_iter)
         except:
@@ -405,7 +401,6 @@ def main():
                     unsup_loss_ce /= y_mask.sum()
                 total_loss_unsup.append(unsup_loss_ce.item())
 
-
             if opt.filter == "none":
                 pseudo_labels[pseudo_labels[:, :] == tokenizer.pad_token_id] = -100
                 unsup_output = model(aug_ids, attention_mask=aug_mask,
@@ -441,7 +436,6 @@ def main():
                 pseudo_labels[pseudo_labels[:, :] == tokenizer.pad_token_id] = -100
                 unsup_output = model(aug_ids, attention_mask=aug_mask,
                                      labels=pseudo_labels)
-
                 unsup_logits = unsup_output[1]
                 pseudo_labels[pseudo_labels[:, :] == -100] = tokenizer.pad_token_id
                 unsup_loss_ce = loss_fn(unsup_logits.view(-1, unsup_logits.size(-1)), pseudo_labels.view(-1))
@@ -454,7 +448,6 @@ def main():
 
                 total_loss_unsup.append(unsup_loss_ce.item())
 
-
         if opt.unsup and step > opt.pre_step:
             optimize(optimizer, loss_ce + opt.weight * unsup_loss_ce)
         else:
@@ -462,7 +455,6 @@ def main():
 
         if step % opt.log_step == 0:
             lr = optimizer._optimizer.param_groups[0]['lr']
-
             if opt.unsup and step > opt.pre_step:
                 print('[Info] steps {:05d} | loss_sup {:.4f} | '
                       'loss_unsup {:.4f} | lr {:.6f} | second {:.2f}'.format(
@@ -503,15 +495,12 @@ def main():
 
                     ids = data['source_ids'].to(device, dtype=torch.long)
                     mask = data['source_mask'].to(device, dtype=torch.long)
-
                     generated_ids = model.generate(ids,
                                                    attention_mask=mask,
                                                    num_beams=5,
                                                    max_length=30)
-
                     preds = [tokenizer.decode(g, skip_special_tokens=True, clean_up_tokenization_spaces=False) for g in
                              generated_ids]
-
                     pred_list.extend(preds)
 
                 for text in pred_list:
@@ -546,7 +535,10 @@ def main():
             else:
                 tab += 1
             if tab == opt.patience:
+                #early stopping
                 exit()
+
+            # Evaluate style accuracy
             test_tgt = []
             test_src = []
             with open(pred_file, 'r') as f:
@@ -557,7 +549,6 @@ def main():
                         test_src.append(cls_tokenizer.encode(line.strip())[:opt.max_len])
             cls_loader = SCIterator(test_src, test_tgt, opt, cls_tokenizer.pad_token_id)
             cls_loss_fn = torch.nn.CrossEntropyLoss()
-
 
             total_num = 0.
             total_acc = 0.
