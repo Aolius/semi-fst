@@ -158,7 +158,7 @@ def main():
         fbl.write(str(opt) + '\n')
 
     set_seed(opt.seed)
-    # fitlog.debug()
+    fitlog.debug()
     fitlog.set_log_dir("final/")
     fitlog.add_hyper(opt)
     fitlog.add_hyper_in_file(__file__)
