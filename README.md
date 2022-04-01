@@ -44,7 +44,7 @@ By default, the `-log_dir` parameter in `T5_Large_filter.py` is set to `./logs`.
 fitlog init logs
 ```
 where `logs` is the directory name.
-By default, we disable fitlog in `T5_Large_filter.py` by `fitlog.debug()`. Therefore, you can drop this step if you don't want to use fitlog.
+By default, we disable fitlog in `T5_Large_filter.py` by `fitlog.debug()`. Therefore, you can skip this step if you don't want to use fitlog.
 ## Training
 ```
 sh run_sup.sh # supervised training
@@ -58,4 +58,13 @@ To avoid this, check `./aug_fix/README.md`.
 ## Model Outputs
 The outputs of our best systems are provided in `./model_outputs`.
 
-
+## Citation
+If you find this project useful, please cite it using the following format
+```
+@article{liu2022semi,
+  title={Semi-Supervised Formality Style Transfer with Consistency Training},
+  author={Liu, Ao and Wang, An and Okazaki, Naoaki},
+  journal={arXiv preprint arXiv:2203.13620},
+  year={2022}
+}
+```
