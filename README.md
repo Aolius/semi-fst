@@ -1,5 +1,5 @@
 
-# Semi-Supervised Formality Style Transfer with Consistency Training (ACL2022)
+# [Semi-Supervised Formality Style Transfer with Consistency Training (ACL2022)](https://arxiv.org/abs/2203.13620)
 
 ## Requirements
 
