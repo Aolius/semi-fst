@@ -61,10 +61,14 @@ The outputs of our best systems are provided in `./model_outputs`.
 ## Citation
 If you find this project useful, please cite it using the following format
 ```
-@article{liu2022semi,
-  title={Semi-Supervised Formality Style Transfer with Consistency Training},
-  author={Liu, Ao and Wang, An and Okazaki, Naoaki},
-  journal={arXiv preprint arXiv:2203.13620},
-  year={2022}
+@inproceedings{liu-etal-2022-semi,
+    title = "Semi-Supervised Formality Style Transfer with Consistency Training",
+    author = "Liu, Ao  and
+      Wang, An  and
+      Okazaki, Naoaki",
+    booktitle = "Proceedings of the 60th Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)",
+    year = "2022",
+    pages = "4689--4701",
 }
+
 ```
