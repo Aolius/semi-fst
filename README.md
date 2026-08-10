@@ -1,4 +1,5 @@
 
+
 # [Semi-Supervised Formality Style Transfer with Consistency Training (ACL2022)](https://arxiv.org/abs/2203.13620)
 
 ## Requirements
@@ -27,6 +28,7 @@ Once you have gained access to the L6 corpus, please forward the acknowledgment 
 
 ## Preparation
 ### 1: Pre-train style classifiers
+First, download the GloVe embeddings (`glove.840B.300d.txt`) and place it in the `./checkpoints/` directory. Then run:
 ```
 python classifier/textcnn_t5.py -dataset em
 ```
